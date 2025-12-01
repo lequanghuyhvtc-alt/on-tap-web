@@ -33,22 +33,36 @@ const parseCSV = (text) => {
 const parseQuestions = (rows) => {
   const dataRows = rows.slice(1).filter(r => r.length > 2 && r[1]);
   return dataRows.map((col, index) => {
+    // Lấy các đáp án từ cột D, E, F, G, H (index 3 đến 7)
     const options = [col[3], col[4], col[5], col[6], col[7]].filter(opt => opt && opt.trim() !== '');
-    let correctText = col[2];
-    const correctIndex = parseInt(col[2]);
-    if (!isNaN(correctIndex) && correctIndex > 0 && correctIndex <= options.length) {
-      correctText = options[correctIndex - 1];
+    
+    // Xử lý cột Đáp án (Cột C - index 2)
+    let rawAns = col[2] ? col[2].toString().toLowerCase().trim() : '';
+    let finalIndex = -1;
+
+    // Map chữ cái sang số index (a->0, b->1, c->2...)
+    const charMap = { 'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4 };
+
+    if (charMap.hasOwnProperty(rawAns)) {
+      finalIndex = charMap[rawAns];
     } else {
-       const match = col[2] ? col[2].match(/\d+/) : null;
-       if(match) {
-         const idx = parseInt(match[0]);
-         if(idx > 0 && idx <= options.length) correctText = options[idx - 1];
-       }
+      // Nếu nhập số (ví dụ 1, 2...)
+      const num = parseInt(rawAns);
+      if (!isNaN(num) && num > 0) {
+        finalIndex = num - 1;
+      }
     }
+
+    // Fallback: Nếu không tìm thấy index thì thử so sánh text (nếu có)
+    let correctText = (finalIndex >= 0 && finalIndex < options.length) 
+        ? options[finalIndex] 
+        : (col[2] || "");
+
     return {
       id: index + 1,
       question: col[1],
       correctAnswer: correctText,
+      correctIndex: finalIndex, // QUAN TRỌNG: Lưu vị trí đáp án đúng
       options: options
     };
   });
@@ -84,8 +98,6 @@ const QuestionCard = ({ item, index, showResultImmediately = false }) => {
     if (!showResultImmediately) setIsRevealed(false);
   }, [item, showResultImmediately]);
 
-  const correctIndex = item.options.findIndex(opt => opt === item.correctAnswer);
-
   return (
     <div className="bg-white p-6 rounded-lg shadow-md mb-6 border border-gray-200 animate-fade-in">
       <div className="flex justify-between items-start mb-4">
@@ -97,17 +109,21 @@ const QuestionCard = ({ item, index, showResultImmediately = false }) => {
       <div className="space-y-3">
         {item.options.map((opt, idx) => {
           let btnClass = "w-full text-left p-3 rounded border transition-all ";
+          
           if (isRevealed) {
-            if (opt === item.correctAnswer) {
-              btnClass += "bg-green-100 border-green-500 text-green-800 font-medium";
-            } else if (idx === correctIndex) {
-               btnClass += "bg-green-100 border-green-500 text-green-800 font-medium";
+            // SỬA ĐỔI: So sánh vị trí (index) thay vì so sánh nội dung text
+            if (idx === item.correctIndex) {
+              // Đây là đáp án đúng -> Màu xanh
+              btnClass += "bg-green-100 border-green-500 text-green-800 font-medium shadow-sm";
             } else {
-              btnClass += "bg-gray-50 border-gray-200 text-gray-500 opacity-70";
+              // Các đáp án còn lại -> Màu xám mờ
+              btnClass += "bg-gray-50 border-gray-200 text-gray-400 opacity-60";
             }
           } else {
+            // Trạng thái chưa xem đáp án
             btnClass += "bg-gray-50 border-gray-200 hover:bg-blue-50 hover:border-blue-300 text-gray-700";
           }
+          
           return <div key={idx} className={btnClass}>{opt}</div>;
         })}
       </div>
