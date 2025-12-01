@@ -346,7 +346,7 @@ export default function App() {
       <header className="bg-white shadow-sm sticky top-0 z-20">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-xl text-gray-800">
-            <BookOpen className="text-blue-600" /> Q&A Master
+            <BookOpen className="text-blue-600" /> CHÚC BẠN CÓ KẾT QUẢ THI THẬT TỐT
           </div>
           <div className="flex items-center gap-3">
              <button onClick={() => { fetchQuestions(); setCurrentPage(1); }} className="p-2 text-blue-600 bg-blue-50 rounded-full flex items-center gap-1 text-sm font-medium hover:bg-blue-100 transition-colors">
