@@ -5,11 +5,12 @@ import { Search, BookOpen, LogOut, CheckCircle, HelpCircle, ChevronLeft, Chevron
 
 // 1. Link dữ liệu CÂU HỎI (Sheet "cauhoi")
 // Hãy lấy link CSV của tab chứa câu hỏi và dán vào đây
-const QUESTIONS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSzAJgPL7HRlqiDRjj_8-cmY0NhuPkonAZSIGToSREQcpZVrDCvXTXLSz3stZzSzds0_GsVp8hKbMA0/pub?gid=0&single=true&output=csv"; 
+const QUESTIONS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSzAJgPL7HRlqiDRjj_8-cmY0NhuPkonAZSIGToSREQcpZVrDCvXTXLSz3stZzSzds0_GsVp8hKbMA0/pubhtml?gid=0&single=true"; 
 
 // 2. Link dữ liệu NGƯỜI DÙNG ĐƯỢC PHÉP (Sheet "users")
-// Link bạn đã cung cấp
-const ALLOWED_USERS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSzAJgPL7HRlqiDRjj_8-cmY0NhuPkonAZSIGToSREQcpZVrDCvXTXLSz3stZzSzds0_GsVp8hKbMA0/pub?gid=0&single=true&output=csv"; 
+// QUAN TRỌNG: Bạn cần lấy link CSV của riêng tab "users". 
+// Nếu link có gid=0 thì sai (đó là tab câu hỏi).
+const ALLOWED_USERS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSzAJgPL7HRlqiDRjj_8-cmY0NhuPkonAZSIGToSREQcpZVrDCvXTXLSz3stZzSzds0_GsVp8hKbMA0/pubhtml?gid=1298018390&single=true"; 
 
 // --- DỮ LIỆU MẪU (Dùng khi chưa có link CSV) ---
 const FALLBACK_DATA = Array.from({ length: 5 }, (_, i) => ({
@@ -132,15 +133,11 @@ const QuestionCard = ({ item, index, showResultImmediately = false }) => {
 
 // --- COMPONENT CHÍNH ---
 export default function App() {
-  // Trạng thái người dùng (Lưu email)
   const [currentUser, setCurrentUser] = useState(null);
-  
-  // Trạng thái Login Form
   const [inputEmail, setInputEmail] = useState('');
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  // Trạng thái Ứng dụng
   const [view, setView] = useState('review');
   const [dataLoading, setDataLoading] = useState(false);
   const [fullData, setFullData] = useState([]);
@@ -150,7 +147,6 @@ export default function App() {
   const itemsPerPage = 20;
   const [searchTerm, setSearchTerm] = useState('');
 
-  // 1. Load Tailwind CSS
   useEffect(() => {
     if (!document.querySelector('#tailwind-script')) {
       const script = document.createElement('script');
@@ -161,16 +157,14 @@ export default function App() {
     }
   }, []);
 
-  // 2. Check LocalStorage khi mới vào app (Giữ trạng thái đăng nhập)
   useEffect(() => {
     const savedUser = localStorage.getItem('qa_app_user');
     if (savedUser) {
       setCurrentUser(savedUser);
-      fetchQuestions(); // Tải dữ liệu luôn
+      fetchQuestions();
     }
   }, []);
 
-  // --- LOGIC XỬ LÝ DỮ LIỆU ---
   const fetchQuestions = async () => {
     setDataLoading(true);
     setErrorMsg('');
@@ -200,7 +194,6 @@ export default function App() {
     }
   };
 
-  // --- LOGIC ĐĂNG NHẬP ---
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!inputEmail.trim()) return;
@@ -215,20 +208,25 @@ export default function App() {
       
       const text = await response.text();
       const rows = parseCSV(text);
+      
+      // LOG DEBUG: Kiểm tra xem đang tải cái gì về
+      console.log("Dữ liệu thô tải về:", rows.slice(0, 3)); 
+
       const allowedEmails = parseAllowedUsers(rows);
+      console.log("Danh sách email hợp lệ tìm thấy:", allowedEmails);
       
       const emailToCheck = inputEmail.toLowerCase().trim();
 
       if (allowedEmails.includes(emailToCheck)) {
-        // Đăng nhập thành công
         setCurrentUser(emailToCheck);
-        localStorage.setItem('qa_app_user', emailToCheck); // Lưu session
-        fetchQuestions(); // Tải câu hỏi
+        localStorage.setItem('qa_app_user', emailToCheck);
+        fetchQuestions();
       } else {
         setLoginError('Email này không có quyền truy cập.');
       }
     } catch (error) {
       setLoginError('Lỗi kiểm tra: ' + error.message);
+      console.error(error);
     } finally {
       setIsLoggingIn(false);
     }
@@ -241,7 +239,6 @@ export default function App() {
     setReviewData([]);
   };
 
-  // Logic hiển thị
   const currentQuestions = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
     return reviewData.slice(start, start + itemsPerPage);
@@ -257,8 +254,9 @@ export default function App() {
 
   // --- GIAO DIỆN ĐĂNG NHẬP (Khi chưa có User) ---
   if (!currentUser) {
+    // FIX UI: Thêm w-screen để ép full chiều rộng nếu xóa index.css chưa triệt để
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center p-4 font-sans">
+      <div className="min-h-screen w-screen bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center p-4 font-sans">
         <div className="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full">
           <div className="flex justify-center mb-6">
             <div className="bg-blue-100 p-4 rounded-full">
@@ -311,8 +309,8 @@ export default function App() {
 
   // --- GIAO DIỆN CHÍNH (Khi đã đăng nhập) ---
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
-      {/* Header */}
+    // FIX UI: Thêm w-screen
+    <div className="min-h-screen w-screen bg-gray-50 flex flex-col font-sans">
       <header className="bg-white shadow-sm sticky top-0 z-20">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
