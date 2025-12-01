@@ -4,9 +4,11 @@ import { Search, BookOpen, LogOut, CheckCircle, HelpCircle, ChevronLeft, Chevron
 // --- CẤU HÌNH: ĐƯỜNG DẪN DỮ LIỆU ---
 
 // 1. Link dữ liệu CÂU HỎI (Sheet "cauhoi")
+// Đã sửa đường dẫn thành định dạng CSV chuẩn (output=csv) thay vì pubhtml
 const QUESTIONS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSzAJgPL7HRlqiDRjj_8-cmY0NhuPkonAZSIGToSREQcpZVrDCvXTXLSz3stZzSzds0_GsVp8hKbMA0/pub?gid=0&single=true&output=csv"; 
 
 // 2. Link dữ liệu NGƯỜI DÙNG ĐƯỢC PHÉP (Sheet "users")
+// Đã sửa đường dẫn thành định dạng CSV chuẩn (output=csv) thay vì pubhtml
 const ALLOWED_USERS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSzAJgPL7HRlqiDRjj_8-cmY0NhuPkonAZSIGToSREQcpZVrDCvXTXLSz3stZzSzds0_GsVp8hKbMA0/pub?gid=1298018390&single=true&output=csv"; 
 
 // --- DỮ LIỆU MẪU ---
@@ -141,8 +143,6 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Đã xóa phần useEffect tải Tailwind ở đây vì đã thêm vào index.html
 
   useEffect(() => {
     const savedUser = localStorage.getItem('qa_app_user');
