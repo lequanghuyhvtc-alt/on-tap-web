@@ -4,15 +4,12 @@ import { Search, BookOpen, LogOut, CheckCircle, HelpCircle, ChevronLeft, Chevron
 // --- CẤU HÌNH: ĐƯỜNG DẪN DỮ LIỆU ---
 
 // 1. Link dữ liệu CÂU HỎI (Sheet "cauhoi")
-// Hãy lấy link CSV của tab chứa câu hỏi và dán vào đây
 const QUESTIONS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSzAJgPL7HRlqiDRjj_8-cmY0NhuPkonAZSIGToSREQcpZVrDCvXTXLSz3stZzSzds0_GsVp8hKbMA0/pubhtml?gid=0&single=true"; 
 
 // 2. Link dữ liệu NGƯỜI DÙNG ĐƯỢC PHÉP (Sheet "users")
-// QUAN TRỌNG: Bạn cần lấy link CSV của riêng tab "users". 
-// Nếu link có gid=0 thì sai (đó là tab câu hỏi).
 const ALLOWED_USERS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSzAJgPL7HRlqiDRjj_8-cmY0NhuPkonAZSIGToSREQcpZVrDCvXTXLSz3stZzSzds0_GsVp8hKbMA0/pubhtml?gid=1298018390&single=true"; 
 
-// --- DỮ LIỆU MẪU (Dùng khi chưa có link CSV) ---
+// --- DỮ LIỆU MẪU ---
 const FALLBACK_DATA = Array.from({ length: 5 }, (_, i) => ({
   id: i + 1,
   question: `Dữ liệu mẫu (Do chưa có link CSV Câu hỏi). Vui lòng cập nhật biến QUESTIONS_CSV_URL trong code.`,
@@ -23,7 +20,6 @@ const FALLBACK_DATA = Array.from({ length: 5 }, (_, i) => ({
 // --- HÀM HỖ TRỢ: PHÂN TÍCH CSV ---
 const parseCSV = (text) => {
   const rows = text.split('\n').map(row => {
-    // Regex xử lý CSV cơ bản (chấp nhận dấu phẩy trong ngoặc kép)
     return row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(cell => 
       cell.trim().replace(/^"|"$/g, '').replace(/""/g, '"')
     );
@@ -56,11 +52,10 @@ const parseQuestions = (rows) => {
   });
 };
 
-// Helper: Parse Users (Tìm cột chứa Email)
+// Helper: Parse Users
 const parseAllowedUsers = (rows) => {
   if (rows.length < 2) return [];
   const headerRow = rows[0].map(cell => cell.toLowerCase());
-  // Tìm cột có chữ "email", nếu không thấy thì lấy cột đầu tiên (index 0)
   const emailColIndex = headerRow.findIndex(h => h.includes('email'));
   const targetCol = emailColIndex !== -1 ? emailColIndex : 0;
 
@@ -147,15 +142,7 @@ export default function App() {
   const itemsPerPage = 20;
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    if (!document.querySelector('#tailwind-script')) {
-      const script = document.createElement('script');
-      script.id = 'tailwind-script';
-      script.src = "https://cdn.tailwindcss.com";
-      script.async = true;
-      document.head.appendChild(script);
-    }
-  }, []);
+  // Đã xóa phần useEffect tải Tailwind ở đây vì đã thêm vào index.html
 
   useEffect(() => {
     const savedUser = localStorage.getItem('qa_app_user');
@@ -202,18 +189,13 @@ export default function App() {
     setLoginError('');
 
     try {
-      // Tải danh sách user từ Google Sheet
       const response = await fetch(ALLOWED_USERS_CSV_URL);
       if (!response.ok) throw new Error("Không thể kết nối danh sách User");
       
       const text = await response.text();
       const rows = parseCSV(text);
       
-      // LOG DEBUG: Kiểm tra xem đang tải cái gì về
-      console.log("Dữ liệu thô tải về:", rows.slice(0, 3)); 
-
       const allowedEmails = parseAllowedUsers(rows);
-      console.log("Danh sách email hợp lệ tìm thấy:", allowedEmails);
       
       const emailToCheck = inputEmail.toLowerCase().trim();
 
@@ -252,9 +234,7 @@ export default function App() {
     );
   }, [searchTerm, fullData]);
 
-  // --- GIAO DIỆN ĐĂNG NHẬP (Khi chưa có User) ---
   if (!currentUser) {
-    // FIX UI: Thêm w-screen để ép full chiều rộng nếu xóa index.css chưa triệt để
     return (
       <div className="min-h-screen w-screen bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center p-4 font-sans">
         <div className="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full">
@@ -307,9 +287,7 @@ export default function App() {
     );
   }
 
-  // --- GIAO DIỆN CHÍNH (Khi đã đăng nhập) ---
   return (
-    // FIX UI: Thêm w-screen
     <div className="min-h-screen w-screen bg-gray-50 flex flex-col font-sans">
       <header className="bg-white shadow-sm sticky top-0 z-20">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
