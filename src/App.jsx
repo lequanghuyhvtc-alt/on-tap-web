@@ -31,38 +31,43 @@ const parseCSV = (text) => {
 
 // Helper: Parse Câu hỏi
 const parseQuestions = (rows) => {
-  const dataRows = rows.slice(1).filter(r => r.length > 2 && r[1]);
+  // Bỏ qua dòng tiêu đề (hàng 1)
+  const dataRows = rows.slice(1).filter(r => r.length > 1 && (r[1] || r[2]));
+  
   return dataRows.map((col, index) => {
-    // Lấy các đáp án từ cột D, E, F, G, H (index 3 đến 7)
-    const options = [col[3], col[4], col[5], col[6], col[7]].filter(opt => opt && opt.trim() !== '');
+    // Lấy 5 cột phương án D, E, F, G, H (tương ứng index 3 -> 7)
+    // QUAN TRỌNG: Không dùng .filter() để giữ nguyên vị trí index (A luôn là 0, B luôn là 1...)
+    const options = [col[3], col[4], col[5], col[6], col[7]].map(opt => opt ? opt.toString().trim() : "");
     
     // Xử lý cột Đáp án (Cột C - index 2)
-    let rawAns = col[2] ? col[2].toString().toLowerCase().trim() : '';
-    let finalIndex = -1;
+    let rawAns = col[2] ? col[2].toString().toLowerCase() : '';
+    
+    // Làm sạch: Xóa dấu chấm, khoảng trắng (ví dụ "c." -> "c", " c" -> "c")
+    rawAns = rawAns.replace(/[^a-z0-9]/g, '');
 
-    // Map chữ cái sang số index (a->0, b->1, c->2...)
+    let finalIndex = -1;
     const charMap = { 'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4 };
 
     if (charMap.hasOwnProperty(rawAns)) {
       finalIndex = charMap[rawAns];
     } else {
-      // Nếu nhập số (ví dụ 1, 2...)
+      // Nếu nhập số (1, 2...)
       const num = parseInt(rawAns);
       if (!isNaN(num) && num > 0) {
         finalIndex = num - 1;
       }
     }
 
-    // Fallback: Nếu không tìm thấy index thì thử so sánh text (nếu có)
-    let correctText = (finalIndex >= 0 && finalIndex < options.length) 
-        ? options[finalIndex] 
-        : (col[2] || "");
+    // Debug: In ra console để kiểm tra nếu lỗi
+    if (finalIndex === -1) {
+      console.warn(`Câu ${index + 1}: Không tìm thấy đáp án cho giá trị "${col[2]}"`);
+    }
 
     return {
       id: index + 1,
-      question: col[1],
-      correctAnswer: correctText,
-      correctIndex: finalIndex, // QUAN TRỌNG: Lưu vị trí đáp án đúng
+      question: col[1] || "Câu hỏi chưa có nội dung",
+      correctTextRaw: col[2], // Lưu lại text gốc để debug hiển thị
+      correctIndex: finalIndex,
       options: options
     };
   });
@@ -106,40 +111,51 @@ const QuestionCard = ({ item, index, showResultImmediately = false }) => {
           {item.question}
         </h3>
       </div>
+
       <div className="space-y-3">
         {item.options.map((opt, idx) => {
+          // Nếu phương án rỗng thì không hiển thị nút (nhưng vẫn giữ đúng index)
+          if (!opt) return null;
+
           let btnClass = "w-full text-left p-3 rounded border transition-all ";
           
           if (isRevealed) {
-            // SỬA ĐỔI: So sánh vị trí (index) thay vì so sánh nội dung text
             if (idx === item.correctIndex) {
-              // Đây là đáp án đúng -> Màu xanh
+              // Đáp án đúng -> Màu xanh
               btnClass += "bg-green-100 border-green-500 text-green-800 font-medium shadow-sm";
             } else {
-              // Các đáp án còn lại -> Màu xám mờ
+              // Đáp án sai -> Màu xám
               btnClass += "bg-gray-50 border-gray-200 text-gray-400 opacity-60";
             }
           } else {
-            // Trạng thái chưa xem đáp án
+            // Chưa xem -> Màu trắng
             btnClass += "bg-gray-50 border-gray-200 hover:bg-blue-50 hover:border-blue-300 text-gray-700";
           }
           
           return <div key={idx} className={btnClass}>{opt}</div>;
         })}
       </div>
-      {!showResultImmediately && (
-        <div className="mt-4 flex justify-end">
+
+      {/* Phần hiển thị kết quả / Debug */}
+      <div className="mt-4 flex justify-between items-center">
+        {isRevealed && item.correctIndex === -1 && (
+           <span className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded">
+             ⚠ Lỗi file Excel: Đáp án "{item.correctTextRaw}" không khớp A/B/C/D
+           </span>
+        )}
+        
+        {!showResultImmediately && (
           <button
             onClick={() => setIsRevealed(true)}
             disabled={isRevealed}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm transition-colors ${
+            className={`ml-auto flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm transition-colors ${
               isRevealed ? "bg-gray-200 text-gray-500 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700"
             }`}
           >
             <CheckCircle size={16} /> {isRevealed ? "Đã hiện đáp án" : "Xem đáp án"}
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
