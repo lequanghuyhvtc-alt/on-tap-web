@@ -4,10 +4,10 @@ import { Search, BookOpen, LogOut, CheckCircle, HelpCircle, ChevronLeft, Chevron
 // --- CẤU HÌNH: ĐƯỜNG DẪN DỮ LIỆU ---
 
 // 1. Link dữ liệu CÂU HỎI (Sheet "cauhoi")
-const QUESTIONS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSzAJgPL7HRlqiDRjj_8-cmY0NhuPkonAZSIGToSREQcpZVrDCvXTXLSz3stZzSzds0_GsVp8hKbMA0/pubhtml?gid=0&single=true"; 
+const QUESTIONS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSzAJgPL7HRlqiDRjj_8-cmY0NhuPkonAZSIGToSREQcpZVrDCvXTXLSz3stZzSzds0_GsVp8hKbMA0/pub?gid=0&single=true&output=csv"; 
 
 // 2. Link dữ liệu NGƯỜI DÙNG ĐƯỢC PHÉP (Sheet "users")
-const ALLOWED_USERS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSzAJgPL7HRlqiDRjj_8-cmY0NhuPkonAZSIGToSREQcpZVrDCvXTXLSz3stZzSzds0_GsVp8hKbMA0/pubhtml?gid=1298018390&single=true"; 
+const ALLOWED_USERS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSzAJgPL7HRlqiDRjj_8-cmY0NhuPkonAZSIGToSREQcpZVrDCvXTXLSz3stZzSzds0_GsVp8hKbMA0/pub?gid=1298018390&single=true&output=csv"; 
 
 // --- DỮ LIỆU MẪU ---
 const FALLBACK_DATA = Array.from({ length: 5 }, (_, i) => ({
