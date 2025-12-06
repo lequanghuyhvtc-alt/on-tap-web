@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Search, BookOpen, LogOut, CheckCircle, HelpCircle, ChevronLeft, ChevronRight, User, RefreshCw, AlertCircle, Lock, ArrowRight, Clock, Play, Award, RotateCcw, ShieldCheck, Frown, Smile, PartyPopper, Moon, Sun, Zap, LayoutGrid, Check } from 'lucide-react';
+import { Search, BookOpen, LogOut, CheckCircle, HelpCircle, ChevronLeft, ChevronRight, User, RefreshCw, AlertCircle, Lock, ArrowRight, Clock, Play, Award, RotateCcw, ShieldCheck, Frown, Smile, PartyPopper, Moon, Sun, Zap, LayoutGrid, Check, Eye } from 'lucide-react';
 
 // --- CẤU HÌNH ---
 const API_URL = "https://script.google.com/macros/s/AKfycbz..."; 
@@ -93,7 +93,6 @@ const QuestionCard = ({ item, index, mode = 'view', selectedOption = null, onSel
       <div className="space-y-3">
         {item.options.map((opt, idx) => {
           if (!opt) return null;
-          
           if (mode === 'search' && idx !== item.correctIndex) return null;
 
           let btnClass = "w-full text-left p-4 rounded-xl border-2 transition-all flex items-center cursor-pointer group ";
@@ -165,7 +164,6 @@ export default function App() {
   const [reviewFeedback, setReviewFeedback] = useState(null); 
   const [showConfetti, setShowConfetti] = useState(false);
   
-  // State mới: Index bắt đầu tùy chỉnh
   const [customStartIndex, setCustomStartIndex] = useState(1);
 
   const [examStatus, setExamStatus] = useState('intro'); 
@@ -173,6 +171,9 @@ export default function App() {
   const [userAnswers, setUserAnswers] = useState({});
   const [timeLeft, setTimeLeft] = useState(30 * 60);
   const timerRef = useRef(null);
+
+  // --- STATE ĐẾM TRUY CẬP ---
+  const [visitCount, setVisitCount] = useState(0);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDarkMode);
@@ -182,6 +183,17 @@ export default function App() {
   useEffect(() => {
     const savedUser = localStorage.getItem('qa_app_user');
     if (savedUser) { setCurrentUser(savedUser); fetchQuestions(); }
+
+    // --- LOGIC ĐẾM TRUY CẬP (Sử dụng counterapi.dev) ---
+    // Namespace: qamaster-tax, Key: visits
+    const NAMESPACE = 'qamaster-tax-vn'; 
+    const KEY = 'visits';
+    fetch(`https://api.counterapi.dev/v1/${NAMESPACE}/${KEY}/up`)
+      .then(res => res.json())
+      .then(data => {
+        if(data && data.count) setVisitCount(data.count);
+      })
+      .catch(err => console.error("Counter Error:", err));
   }, []);
 
   useEffect(() => {
@@ -225,13 +237,11 @@ export default function App() {
     finally { setIsLoggingIn(false); }
   };
 
-  // Cập nhật hàm startReview để hỗ trợ chọn câu bắt đầu
   const startReview = (mode, startIndex = 0) => {
     if (fullData.length === 0) return;
     const queue = mode === 'random' ? shuffleArray([...fullData]) : [...fullData];
     setReviewQueue(queue); 
     
-    // Logic xác định vị trí bắt đầu
     let finalIndex = 0;
     if (mode === 'sequential') {
         if (startIndex >= 0 && startIndex < queue.length) {
@@ -245,7 +255,6 @@ export default function App() {
     setReviewStatus('playing');
   };
 
-  // Hàm mới: Quay lại câu trước
   const handlePrevReviewQuestion = () => {
     if (currentReviewIndex > 0) {
       setCurrentReviewIndex(prev => prev - 1);
@@ -391,7 +400,7 @@ export default function App() {
                     <p className="text-sm text-gray-500 dark:text-gray-400">Hệ thống sẽ trộn câu hỏi để bạn phản xạ nhanh hơn.</p>
                   </button>
 
-                  {/* CARD LẦN LƯỢT (CUSTOM INPUT) */}
+                  {/* CARD LẦN LƯỢT */}
                   <div className="p-8 bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 hover:border-violet-500 hover:shadow-xl hover:shadow-violet-500/10 transition-all group flex flex-col h-full relative overflow-hidden">
                     <div className="flex-1">
                       <div className="w-14 h-14 bg-violet-100 dark:bg-violet-900/50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-violet-600 group-hover:text-white transition-colors text-violet-600 dark:text-violet-400">
@@ -466,7 +475,6 @@ export default function App() {
                 </div>
 
                 <div className="mt-8 flex justify-center items-center gap-4">
-                  {/* Nút quay lại */}
                   <button 
                     onClick={handlePrevReviewQuestion} 
                     disabled={currentReviewIndex === 0}
@@ -559,6 +567,12 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {/* --- HIỂN THỊ SỐ LƯỢT TRUY CẬP (Góc phải dưới cùng) --- */}
+      <div className="fixed bottom-4 right-4 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 shadow-lg flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400">
+        <Eye size={14} className="text-blue-500"/>
+        <span>{visitCount > 0 ? visitCount.toLocaleString() : '...'} lượt truy cập</span>
+      </div>
 
       <style>{`
         @keyframes shake { 0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); } 20%, 40%, 60%, 80% { transform: translateX(5px); } }
